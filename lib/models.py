@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String,Float,ForeignKey, DateTime
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime,timezone
 from sqlalchemy.orm import declarative_base
 import requests
@@ -26,7 +26,9 @@ class Crypto(Base):
     volume24a = Column(Float)
     csupply = Column(Float)
     tsupply = Column(Float)
-    msupply = Column(Float)
+    msupply = Column(Float, nullable = True)
+
+    holdings = relationship("Holding", back_populates="crypto", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"crypto {self.id}: " \
@@ -40,14 +42,23 @@ class User(Base):
         __tablename__ = 'users'
         id = Column(Integer, primary_key = True)
         username = Column(String, unique = True)
+        email = Column(String, unique = True)
+        password = Column(String)
         balance_usd = Column(Float, default = 0.0)
+
+        holdings = relationship("Holding", back_populates="user", cascade="all, delete-orphan")
 
 class Holding(Base):
         __tablename__ = 'holdings'
         id = Column(Integer, primary_key = True)
         user_id = Column(Integer, ForeignKey("users.id"))
+        crypto_id = Column(Integer, ForeignKey("cryptos.id"), nullable=False)
         crypto_symbol = Column(String)
         amount = Column(Float)
+
+
+        user = relationship("User", back_populates="holdings")
+        crypto = relationship("Crypto", back_populates="holdings")
 
 class Transaction(Base):
         __tablename__ = 'transactions'
